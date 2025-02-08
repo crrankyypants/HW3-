@@ -5,41 +5,109 @@ date: "2025-02-07"
 output: pdf_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, echo = FALSE, warning= FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(mosaic)
 ```
 
-The theories
-People have a lot of pet theories about what explains the variation in prices between gas stations. Here are
-several such theories:
+```{r echo = FALSE}
+gasprices <- read.csv("gasprices.csv")
+
+
+```
+## **Problem 1 - Gas Station Prices**
+
+In Problem 1 we are assessing multiple theory given the prices of gas stations with multiple outside factors. The goal is to try to understand the variation in gas station prices and what causes that variation. The data given by GasPrices.csv a dataset made by students in spring of 2016 on a project. 
+
+The important variables are below:
+
+- ID: Order in which gas stations were visited
+- Name: Name of gas station
+- Price: Price of regular unleaded gasoline, gathered on Sunday, April 3rd, 2016
+- Highway: Is the gas station accessible from either a highway or a highway access road?
+- Stoplight: Is there a stoplight in front of the gas station?
+- Competitors: Are there any other gas stations in sight?
+- Zipcode: Zip code in which gas station is located
+- Income: Median Household Income of the ZIP code where the gas station is located based on 2014 data from the U.S. Census Bureau
+- Brand: ExxonMobil, ChevronTexaco, Shell, or Other.
+
+The theorys we are trying to either prove or disprove are below:
+
 A) Gas stations charge more if they lack direct competition in sight.
 B) The richer the area, the higher the gas prices.
 C) Gas stations at stoplights charge more.
 D) Gas stations with direct highway access charge more.
 E) Shell charges more than all other non-Shell brands.
 
-Which of these theories seem true, and which are unsupported by data? Take each theory one
-by one and assess the evidence for the theory in this data set.
-Your discussion of each theory should include three mini-sections:
-- Claim: a statement of the theory itself.
-- Evidence: the evidence for or against the theory, in the form of any relevant numerical and/or visual
-summaries If the theory looks correct, provide an estimate of the effect size: that is, how large is the difference
-(e.g. for highway vs. non-highway gas stations) and/or association (e.g. between income and price)? If the
-theory is unsupported by the data, explain why.
-- Conclusion: your conclusion about whether the theory is supported or unsupported by the data.
-No single theory should require more than a single typed page to assess, including any figures, tables, or
-numbers you use to make your case. Less than 1 page per theory is perfectly acceptable—indeed, preferable,
-as long as you can cover all the bases.
-In assessing the evidence for each theory, make sure you appropriately deal with a major issue: uncertainty.
-Remember, this is just a sample of gas stations, and there is always uncertainty when generalizing from a
-specific sample to a wider population. Therefore, you need to quote confidence intervals rather than just
-single-number estimates for these differences. So, for example, it’s not enough to say something like, “the
-difference in price between gas stations on and off the highway is X cents,” and to draw your conclusion from
-this statement. Instead, you have to say something like, “the difference in price between gas stations on an
+### **1. Gas stations charge more if they lack direct competition in sight.**
+
+```{r echo = FALSE, warning = FALSE}
+# what variables 
+  #Competitors, Price
+# create bootstrap to identify the margin of error
+boot_C_P <- do(10000)*diffmean(Price ~ Competitors, data = resample(gasprices))
+bootstrap_df <- data.frame(mean_diff = boot_C_P$diffmean)
+
+# visualize 
+ggplot(bootstrap_df, aes(x = mean_diff)) +
+  geom_histogram( fill = "#60137e", alpha = .7) +
+  labs(title = "Bootstrap sampling distribution for difference in mean gas prices based on competitor presence",
+       x = "Mean Price Difference (No Competitor - With Competitor)",
+       y = "Frequency") +
+  theme_minimal()
+
+# calc mean
+mean_diff <- mean(boot_C_P$diffmean)
+
+conf_int <- confint(boot_C_P)
+
+std_error <- sd(boot_C_P$diffmean)
+
+
+```
+If you have ever driven around, anywhere in america im sure you've seen your fair share of gas stations, the fluctuation of prices varies from place to place, but one may wonder if having competitors near by lead to gas stations having lower prices. The Competitors and Price variables from gasprices data was used to understand if there were competitors around or not and what the prices were for each gas station. The above graph shows a bootstrap sampling distribution of the difference in the means of these 2. The graph skews to the left of 0 only slightly, so we can say with 95% confidence that the average difference in gas price between gas stations with no competitors and with competitors is between -0.055 and 0.008 cents. Since the graph is so close to 0, this means it is a common occurrence for there to be no difference, meaning the average prices were the same or at least almost the same. It seems that there is very little correlation especially considering the mean is -0.023, a very low number and when you think about the difference in gas prices this looks like 2.34 and 2.32 difference is quite small. 
+
+To conclude, the data does not present any real evidence of the idea that gas stations prices are correlated to whether there are competitors nearby. But we must remember that this data was only done over the course of 1 day, in the spring of 2016 in Austin. This data does not cover enough time for us to draw conclusions on if over time this is the same conclusion.
+
+
+
+### **2. The richer the area, the higher the gas prices.**
 
 ```{r}
-gasprices <- read.csv("gasprices.csv")
 
 ```
 
-off the hig
+
+### **3. Gas stations at stoplights charge more.**
+
+```{r}
+
+```
+
+
+### **4. Gas stations with direct highway access charge more.**
+
+```{r}
+
+```
+
+
+### **5. Shell charges more than all other non-Shell brands.**
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
