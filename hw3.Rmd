@@ -1,0 +1,45 @@
+---
+title: "HW 3"
+author: "Genavieve Middaugh"
+date: "2025-02-07"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+The theories
+People have a lot of pet theories about what explains the variation in prices between gas stations. Here are
+several such theories:
+A) Gas stations charge more if they lack direct competition in sight.
+B) The richer the area, the higher the gas prices.
+C) Gas stations at stoplights charge more.
+D) Gas stations with direct highway access charge more.
+E) Shell charges more than all other non-Shell brands.
+
+Which of these theories seem true, and which are unsupported by data? Take each theory one
+by one and assess the evidence for the theory in this data set.
+Your discussion of each theory should include three mini-sections:
+- Claim: a statement of the theory itself.
+- Evidence: the evidence for or against the theory, in the form of any relevant numerical and/or visual
+summaries If the theory looks correct, provide an estimate of the effect size: that is, how large is the difference
+(e.g. for highway vs. non-highway gas stations) and/or association (e.g. between income and price)? If the
+theory is unsupported by the data, explain why.
+- Conclusion: your conclusion about whether the theory is supported or unsupported by the data.
+No single theory should require more than a single typed page to assess, including any figures, tables, or
+numbers you use to make your case. Less than 1 page per theory is perfectly acceptable—indeed, preferable,
+as long as you can cover all the bases.
+In assessing the evidence for each theory, make sure you appropriately deal with a major issue: uncertainty.
+Remember, this is just a sample of gas stations, and there is always uncertainty when generalizing from a
+specific sample to a wider population. Therefore, you need to quote confidence intervals rather than just
+single-number estimates for these differences. So, for example, it’s not enough to say something like, “the
+difference in price between gas stations on and off the highway is X cents,” and to draw your conclusion from
+this statement. Instead, you have to say something like, “the difference in price between gas stations on an
+
+```{r}
+gasprices <- read.csv("gasprices.csv")
+
+```
+
+off the hig
