@@ -6,16 +6,17 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE, echo = FALSE, warning= FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
 library(tidyverse)
 library(mosaic)
 ```
 
-```{r echo = FALSE}
+```{r global, echo = FALSE, warning = FALSE}
 gasprices <- read.csv("gasprices.csv")
 
 
 ```
+
 ## **Problem 1 - Gas Station Prices**
 
 In Problem 1 we are assessing multiple theory given the prices of gas stations with multiple outside factors. The goal is to try to understand the variation in gas station prices and what causes that variation. The data given by GasPrices.csv a dataset made by students in spring of 2016 on a project. 
@@ -40,6 +41,7 @@ C) Gas stations at stoplights charge more.
 D) Gas stations with direct highway access charge more.
 E) Shell charges more than all other non-Shell brands.
 
+\newpage
 ### **1. Gas stations charge more if they lack direct competition in sight.**
 
 ```{r echo = FALSE, warning = FALSE}
@@ -51,7 +53,7 @@ bootstrap_df <- data.frame(mean_diff = boot_C_P$diffmean)
 
 # visualize 
 ggplot(bootstrap_df, aes(x = mean_diff)) +
-  geom_histogram( fill = "#60137e", alpha = .7) +
+  geom_histogram( fill = "#60137e", alpha = .7, bins = 30 ) +
   labs(title = "Bootstrap sampling distribution for difference in mean gas prices based on competitor presence",
        x = "Mean Price Difference (No Competitor - With Competitor)",
        y = "Frequency") +
@@ -66,40 +68,146 @@ std_error <- sd(boot_C_P$diffmean)
 
 
 ```
-If you have ever driven around, anywhere in america im sure you've seen your fair share of gas stations, the fluctuation of prices varies from place to place, but one may wonder if having competitors near by lead to gas stations having lower prices. The Competitors and Price variables from gasprices data was used to understand if there were competitors around or not and what the prices were for each gas station. The above graph shows a bootstrap sampling distribution of the difference in the means of these 2. The graph skews to the left of 0 only slightly, so we can say with 95% confidence that the average difference in gas price between gas stations with no competitors and with competitors is between -0.055 and 0.008 cents. Since the graph is so close to 0, this means it is a common occurrence for there to be no difference, meaning the average prices were the same or at least almost the same. It seems that there is very little correlation especially considering the mean is -0.023, a very low number and when you think about the difference in gas prices this looks like 2.34 and 2.32 difference is quite small. 
+If you have ever driven around, anywhere in america im sure you've seen your fair share of gas stations, the fluctuation of prices varies from place to place, but one may wonder if having competitors near by lead to gas stations having lower prices. The Competitors and Price variables from gasprices data was used to understand if there were competitors around or not and what the prices were for each gas station. 
+
+The above graph shows a bootstrap sampling distribution of the difference in the means of these 2. The graph skews to the left of 0 only slightly, so we can say with 95% confidence that the average difference in gas price between gas stations with no competitors and with competitors is between -0.055 and 0.008 cents. Since the graph is so close to 0, this means it is a common occurrence for there to be no difference, meaning the average prices were the same or at least almost the same. It seems that there is very little correlation especially considering the mean is -0.023, a very low number and when you think about the difference in gas prices this looks like 2.34 and 2.32 difference is quite small. 
 
 To conclude, the data does not present any real evidence of the idea that gas stations prices are correlated to whether there are competitors nearby. But we must remember that this data was only done over the course of 1 day, in the spring of 2016 in Austin. This data does not cover enough time for us to draw conclusions on if over time this is the same conclusion.
 
-
+\newpage
 
 ### **2. The richer the area, the higher the gas prices.**
 
-```{r}
+Because gas stations have various different pricing depending on where you go in America, its reasonable to quesiton if the general income level of the community the gas station is in has any affect on the prices of gas. Below is a graph that is a distribution of samples looking for correlation between gas price and income of the community it is located in. 
+
+```{r echo= FALSE , warning = FALSE}
+correlations <- round(cor(gasprices$Price, gasprices$Income), 3)
+boot_C_I <- do(10000) * cor(resample(gasprices)$Price, resample(gasprices)$Income)
+boostrap_df <- data.frame(correlation= boot_C_I$cor)
+
+ggplot(boostrap_df , aes(x = correlation))+
+  geom_histogram(fill = "#60137e", alpha = 0.7, bins = 30)+
+  labs(title = "Bootstrap Sampling Distribution for Correlation Between Gas Price and Income",
+       x = "Correlation Coefficient",
+       y = "Frequency") +
+  theme_minimal()
+
+confidence <- confint(boot_C_I, level = 0.95)
+lower <- round(confidence[1,2], 3)
+upper <- round(confidence[1,3], 3)
 
 ```
+Given the Distribution we can say with 95% confidence that the correlation between gas prices and the average income of the area around it is between `r lower` and `r upper`. This confidence interval includes 0 meaning that there is not much evidence of these variables causing one another. The income of the area does not seem to suggest the price of gas in the same area. There is a wide range of correlation values between incomr and gas prices, and 0 is right in between the bell shaped distribution, which suggest there is no correlation between the two. 
 
+This graph shows the correlation between the two variables, which is `r correlations`. The correlation is moderate or at least above 0, which suggest some relationship between the two variables.
+
+After looking at these two facts, the initial correlation between the two variables shows there is a moderate correlation between the two, but the sampling distribution shows that it varies and that there is almost no correlation. I think with this information we can conclude that the data is two small, and done over such a short amount of time, we cannot conclude anything about gas stations and their prices based on their average income level using this data. 
+
+\newpage
 
 ### **3. Gas stations at stoplights charge more.**
 
-```{r}
+The next theory is that some Gas stations charge more for gas if it is near a stop light. I think this is a reasonble idea, but lets see if it follows through. 
+
+```{r echo = FALSE, warning = FALSE}
+# Stoplight and Price
+mean_light <- aggregate(Price ~ Stoplight, data=gasprices, mean)
+
+boot_S_P <- do(10000) * diffmean(Price ~ Stoplight, data = resample(gasprices))
+bootstrap_df <- data.frame(mean_diff = boot_S_P$diffmean)
+
+ggplot(bootstrap_df, aes(x = mean_diff)) +
+  geom_histogram(fill = "#60137e", alpha = 0.7, bins = 30) +
+  labs(title = "Bootstrap Sampling distribution of the differences in \n mean between gas prices and stoplight status", x = "Difference in mean", y = "Frequency")+
+  theme_minimal()
+
+confidence<- confint(boot_S_P, level = 0.95)
 
 ```
+After bootstrap sampling the distribution of the Price and Stoplight variables we find that the mean price for gas stations if there is no light is `r round(mean_light[1,2], 3)` and for gas stations near a light were `r round(mean_light[2,2], 3)`. 
+This graph is clearly bell shaped with a center ranging near zero, meaning that the difference in means often ends up being zero or close, this means there is little difference between the means.I can say with 95% confidence that the difference in mean between the stores with stop lights and without gas prices was between `r round(confidence[1,2],3)` and `r round(confidence[1,3], 3 )` cents. Zero is included in the interval once again meaning there is too many outcome and a lot of variance. 
 
+The conclusion here is that we once again cant say for sure if there is any evidence of gas stations charging more for gas if they are near a gas station. 
+
+\newpage
 
 ### **4. Gas stations with direct highway access charge more.**
 
+Related to the last theory this one asks if gas stations with direct highway access charge more for gas. 
+
 ```{r}
+#Highway Price
+mean_highway <- aggregate(Price ~ Highway, data=gasprices, mean)
+
+boot_PH <- do(10000) * diffmean(Price ~ Highway, data = resample(gasprices))
+bootstrap_df <- data.frame(mean_diff = boot_PH$diffmean)
+
+ggplot(bootstrap_df, aes(x = mean_diff)) +
+  geom_histogram(fill = "#60137e", alpha = 0.7, bins = 30) +
+  labs(title = "Bootstrap Sampling distribution of the differences in \n mean between gas prices and nearby highway status", x = "Difference in mean", y = "Frequency")+
+  theme_minimal()
+
+confidence<- confint(boot_PH, level = 0.95)
 
 ```
+First we can see that the general mean from the data for stores not near a highway was `r round(mean_highway[1,2], 3)` and for stores near a highway `r round(mean_highway[2,2], 3)`. They are quite close in range and don't seem to differ, although we can acknowledge that the stores not near highways do have a lower average in price. In the Graph above it shows the sampling distribution of the difference in means from these two variables. We see that it is bell shaped and consistent, and we also see that these are higher values, meaning that there were differences in the mean, suggesting that stores near highways charge more. So I am 95% confident that the difference of means between gas prices and their highway status is between `r round(confidence[1,2],3 )` and `r round(confidence[1,3],3)` cents.
 
+In conclusion , given that the confidence interval is above 0, The graph does show that there is some evidence, stating that stores near highways charge more for gas,but its not a strong difference in means so its only a possibility. So we can say that on the day the data was gathered and the area (2016, and in Austin), that on this day there was slight evidence that gas stations near highways charged more for gas.  
+
+\newpage
 
 ### **5. Shell charges more than all other non-Shell brands.**
 
+This last theory asks if Shell charges more for gas than any other brand. I have always personally avoided Shell, becasue they seem to always be the most expensive gas around me, so I am curious what the information will show. 
+
+```{r }
+mean_brand <- aggregate(Price ~ Brand, data=gasprices, mean)
+
+boot_PB <- do(10000) * diffmean(Price ~ Brand, data = resample(gasprices), only.2 = FALSE)
+bootstrap_df <- data.frame(mean_diff = boot_PB$Shell.Other)
+
+ggplot(bootstrap_df, aes(x = mean_diff)) +
+  geom_histogram(fill = "#60137e", alpha = 0.7, bins = 30) +
+  labs(title = "Bootstrap Sampling distribution of the differences in \n mean between gas prices of Shell vs Prices at other Brands", x = "Difference in mean", y = "Frequency")+
+  theme_minimal()
+
+confidence<- confint(boot_PB, level = 0.95)
+
+
+```
+The graph above is consistent and slightly above zero, this could suggest that there is a slight difference in price between Shell and other brands gas prices. When I get the confidence interval I am 95% confident that the difference of mean prices between Shell brand and other brands gas prices is between `r round(confidence[1,2], 3)` and `r round(confidence[1,3], 3 )` cents. This interval does not include zero, but it is pretty low meaning there is a slight significance to this evidence. Shells average price given this data is 1.88 which the others Chevron is 1.88 , exxon is 1.86 and other is 1.85 approximatly. 
+
+To conclude, this data shows that there is a slight significance to the evidence of Shell being more expensive than other brands, but not very signifigant. The difference in mean of price is low, and doesn't have a high range. 
+
+\newpage
+## **Problem 2 - Mercedes S-Class**
+
+The dataset has data on 30,000 used Mercedes S-Class vehicles sold on cars.com. Mercedes is a popular luxury car brand and here we will be looking at 
+
+- price 
+- mileage
+- trim
+- color 
+- year
+
+### **Part A**
+
+In part A, we need to look at cars from 2011 with the trim being 63 AMG, and we are going to simulate a boostrap sampling distribution to find the average mileage of the 2011 S-Class 63 AMG at this time when the data was gatehred.
+
 ```{r}
+
 
 ```
 
 
+### **Part B**
+
+In part B, we are looking for the proportion of all 2014 S-Class 550s that were Black. To do this we will filter the dat, mutate the data, and find a 95% confidence interval.
+
+```{r}
+
+
+```
 
 
 
