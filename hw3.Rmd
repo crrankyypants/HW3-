@@ -13,6 +13,7 @@ library(mosaic)
 
 ```{r global, echo = FALSE, warning = FALSE}
 gasprices <- read.csv("gasprices.csv")
+sclass <- read.csv("sclass.csv")
 
 
 ```
@@ -192,12 +193,27 @@ The dataset has data on 30,000 used Mercedes S-Class vehicles sold on cars.com. 
 
 ### **Part A**
 
-In part A, we need to look at cars from 2011 with the trim being 63 AMG, and we are going to simulate a boostrap sampling distribution to find the average mileage of the 2011 S-Class 63 AMG at this time when the data was gatehred.
+In part A, we need to look at cars from 2011 with the trim being 63 AMG, and we are going to simulate a boostrap sampling distribution to find the average mileage of the 2011 S-Class 63 AMG at this time when the data was gathered.
 
 ```{r}
+# first filter by year and trim
+sclass_2011 <- sclass %>%
+  filter(year == 2011, trim == "63 AMG")
 
+# we want a 95% boostrap confidence interval for ave mileage of this type of car 
+  # we want to use mileage in hte sclass_2011 filtered data. 
 
+boot_sclass <- do(10000) * mean(~ mileage, data = resample(sclass_2011))
+boot_df <- data.frame(mean_mileage = boot_sclass$mean)
+
+confidence <- confint(boot_sclass, level = 0.95)
+lower_bound1 <- round(confidence[1,2])
+upper_bound1 <- round(confidence[1,3])
+lower_bound1
+upper_bound1
 ```
+
+After making those calculations, I am 95% confident that the average mileage of 2011 S-Class 63 AMG cars hitting the used car market falls between `r lower_bound1` and `r upper_bound1`. 
 
 
 ### **Part B**
@@ -205,11 +221,30 @@ In part A, we need to look at cars from 2011 with the trim being 63 AMG, and we 
 In part B, we are looking for the proportion of all 2014 S-Class 550s that were Black. To do this we will filter the dat, mutate the data, and find a 95% confidence interval.
 
 ```{r}
+sclass_2014 <- sclass %>%
+  filter(year == 2014, trim == "550")
 
+sclass_isblack <- sclass_2014 %>%
+  mutate(isBlack = color == "Black")
 
+boot_2014 <- do(10000) * prop(~ isBlack, data = resample(sclass_isblack))
+boot_df <- data.frame(prop_black = boot_2014$prop_TRUE)
+
+confidence <- confint(boot_2014, level = 0.95)
+
+# Extract lower and upper bounds
+lower_bound <- round(confidence[1,2] * 100, 2)
+
+upper_bound <- round(confidence[1,3] * 100, 2)
+lower_bound
+upper_bound
 ```
 
+I filtered the data to only contain 2014 years and trim 550 and also added a variable that indicated if the car was black or  not using true and false. After bootstrapping to find the proportion, so I am 95% confident that the proportion of all 2014 S-Class 550's that are black is between `r lower_bound`% and `r upper_bound`%. 
 
+
+
+## **Problem 3 - **
 
 
 
