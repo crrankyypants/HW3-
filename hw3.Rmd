@@ -14,6 +14,8 @@ library(mosaic)
 ```{r global, echo = FALSE, warning = FALSE}
 gasprices <- read.csv("gasprices.csv")
 sclass <- read.csv("sclass.csv")
+nbc_pilotsurvey <- read.csv("nbc_pilotsurvey.csv")
+ebay <- read.csv("ebay.csv")
 
 
 ```
@@ -207,10 +209,10 @@ boot_sclass <- do(10000) * mean(~ mileage, data = resample(sclass_2011))
 boot_df <- data.frame(mean_mileage = boot_sclass$mean)
 
 confidence <- confint(boot_sclass, level = 0.95)
+confidence
 lower_bound1 <- round(confidence[1,2])
 upper_bound1 <- round(confidence[1,3])
-lower_bound1
-upper_bound1
+
 ```
 
 After making those calculations, I am 95% confident that the average mileage of 2011 S-Class 63 AMG cars hitting the used car market falls between `r lower_bound1` and `r upper_bound1`. 
@@ -236,21 +238,189 @@ confidence <- confint(boot_2014, level = 0.95)
 lower_bound <- round(confidence[1,2] * 100, 2)
 
 upper_bound <- round(confidence[1,3] * 100, 2)
-lower_bound
-upper_bound
+
 ```
 
 I filtered the data to only contain 2014 years and trim 550 and also added a variable that indicated if the car was black or  not using true and false. After bootstrapping to find the proportion, so I am 95% confident that the proportion of all 2014 S-Class 550's that are black is between `r lower_bound`% and `r upper_bound`%. 
 
 
+\newpage
 
-## **Problem 3 - **
+## **Problem 3 - NBC Viewer Response to TV shows**
+
+This problem uses nbc_pilotsurvey.csv which is a data set that contains information on a research on how viewers respond to TV shows. Each row of this data frame shows the responses of a single viewer (the Viewer variable) to the “pilot” episode1 of a single TV show (Show variable). The remaining variables encode the viewers reactions to the show.
+
+1) Question: What question are you trying to answer?
+2) Approach: What approach/statistical tool did you use to answer the question?
+3) Results: What evidence/results did your approach provide to answer the question? (E.g. any numbers,
+tables, figures as appropriate.) Make sure to include appropriate measures of uncertainty!
+4) Conclusion: What is your conclusion about your question? Provide a written interpretation of your
+results, understandable to stakeholders who might plausibly take an interest in this data set.
+These questions are fairly simple, so we’d expect each of these four sections for each part to be quite
+short—likely no more than 1-3 sentences each
+
+\newpage
+
+### **Part A.**
+ 
+Here we are focusing on the shows "Living with Ed" and "My Name is Earl". Which one makes people happier. Is there evidence that one show consistently produces a higher mean Q1 Happy response among viewers?
+
+```{r}
+
+# we are creating a 95% interval 
+# filter data with only  living with ed or my name is earl. 
+filtered_data <- nbc_pilotsurvey %>%
+  filter(Show %in% c("Living with Ed", "My Name is Earl"))
+
+# find dff mean of viewer response to Q1_Happy quesitons
+boot_Happy <- do(10000) * diffmean(Q1_Happy ~ Show, data = resample(filtered_data))
+
+boot_df <- data.frame(diffmean = boot_Happy$diffmean)
+
+# calc observed difference in mean for each show
+mean_livingWithEd <- mean(filtered_data$Q1_Happy[filtered_data$Show == "Living with Ed"])
+mean_myNameIsEarl <- mean(filtered_data$Q1_Happy[filtered_data$Show == "My Name is Earl"])
+observed_diff <- mean_livingWithEd - mean_myNameIsEarl
+
+ggplot(boot_df, aes(x = diffmean)) + 
+  geom_histogram(binwidth = 0.05, fill = "#60137e", alpha = 0.7)+
+  labs(title= "Boostrap Distribution of Difference of Means between average\n happiness scores", x = "Difference in Means",y = "Frequency") +
+  theme_minimal()+
+  geom_vline(aes(xintercept = mean(diffmean)), color = "blue", linetype = "dashed", size = 1) +
+  geom_vline(aes(xintercept = observed_diff), color = "red", linetype = "solid", size = 1) 
+
+confidence <- confint(boot_Happy, level = 0.95)
+
+lower_bound <- round(confidence[1,2], 2)
+
+upper_bound <- round(confidence[1,3], 2)
+
+```
+
+To find the answer to this question, first we will filter the data to contain only "Living with Ed" or "My Name is Earl". We create a bootstrap to simulate this distributions difference of means between the certain show and the Q1_happy variable that has the rating of is this show made the viewer happy at all. We can then say with 95% confidence that the difference of means between the happiness rating and the Show watched is between `r lower_bound` and `r upper_bound` points. This data gives answers to the question in that we can see the interval includes 0 which means implies that there was no difference but the range goes to almost -0.5 to positive .25. The range is large and the red line marking where the observed difference lies which is no where near the center of the data. the observed difference from the data is `r observed_diff`. But overall we see that its center is in the negatives, and go into deeper negatives than the positive side. this could mean that My name is Earl is making people happier overall. But since the confidence interval includes 0 there is too much variety and suggest there is no statistically significant difference in the happiness scores. Overall there is no difference that we can say for sure. 
+
+\newpage
+
+### **Part B.**
+
+Consider "The Biggest Loser" and "The Apprentice: Los Angeles." Which annoyed people more? Is there evidence that one show consistently produces a higher mean Q1_annoyed response among viewers?  
+
+```{r}
+filtered_data <- nbc_pilotsurvey %>%
+  filter(Show %in% c("The Biggest Loser","The Apprentice: Los Angeles"))
+
+boot_Annoyed <- do(10000) * diffmean(Q1_Annoyed ~ Show, data = resample(filtered_data))
+boot_df  <- data.frame(diffmean = boot_Annoyed$diffmean)
+
+mean_theBiggestLoser <- mean(filtered_data$Q1_Annoyed[filtered_data$Show == "The Biggest Loser"])
+mean_TheApprentice <- mean(filtered_data$Q1_Annoyed[filtered_data$Show == "The Apprentice: Los Angeles"])
+observed_diff <- mean_theBiggestLoser - mean_TheApprentice
+
+ggplot(boot_df, aes(x = diffmean)) + 
+  geom_histogram(binwidth = 0.05, fill = "#60137e", alpha = 0.7)+
+  labs(title= "Boostrap Distribution of Difference of Means between average\n annoyance scores", x = "Difference in Means",y = "Frequency") +
+  theme_minimal()+
+  geom_vline(aes(xintercept = mean(diffmean)), color = "blue", linetype = "dashed", size = 1) +
+  geom_vline(aes(xintercept = observed_diff), color = "red", linetype = "solid", size = 1) 
+
+confidence <- confint(boot_Annoyed, level = 0.95)
+
+lower_bound <- round(confidence[1,2], 2)
+
+upper_bound <- round(confidence[1,3], 2)
 
 
+```
+
+Using a bootstrap sampling distribution of the Q1_Annoyed variable on data containing only "The Biggest Loser" and "The Apprentice: Los Angeles", we got a observed difference of means between these two shows Q1_Annoyed variable which is `r observed_diff`. With 95% confidence we can say that the difference of means between the Q1_annoyed variable and the two shows "The Biggest Loser" and "The Apprentice: Los Angeles" is between `r lower_bound` and `r upper_bound` points. The confidence interval does not contain 0 which means that The Apprentice has higher average annoyed variable. People generally on average think that this show is annoying in contrast to their annoyance to The Biggest Loser. The Observed difference is right in the middle so we see that the data in this data set is in line with what the average bootstrap mean is. 
+
+\newpage
+
+### **Part C.**
+
+"Dancing with the Stars"  is a dancing competition between couples,being a celebrity paired with a professional. What proportion of American TV watchers would expect to give response of 4  or greater to Q2_Confusing question? Any response of 4 or 5 indicated that the survey participant either Agreed (4) or Strongly Agreed (5) that “Dancing with the Stars” was a confusing show.'
+
+```{r}
+
+# filter data to only have dancing with he stars and create a new variable that defines if a Q2_confusing variable is 4 or greater
+
+filtered_data <- nbc_pilotsurvey %>%
+  filter(Show == "Dancing with the Stars")
+  
+confusion_data <- filtered_data %>%
+  mutate(highConfusion = Q2_Confusing >= 4)
+
+observed_prop <- mean(confusion_data$highConfusion)
+
+boot_confused <- do(10000) * mean(resample(confusion_data$highConfusion))
+boot_df <- data.frame(prop = boot_confused$mean)
+
+ggplot(boot_df, aes(x = prop)) +
+  geom_histogram(fill = "#60137e", alpha = 0.7)+
+  labs(title= "Boostrap Distribution of proportion of instances of confusion rating 4 or \n more on Dancing with the Stars", x = "Prop",y = "Frequency") +
+  theme_minimal()+
+  geom_vline(aes(xintercept = mean(prop)), color = "blue", linetype = "dashed", size = 1) +
+  geom_vline(aes(xintercept = observed_prop), color = "red", linetype = "solid", size = 1) 
+
+confidence <- confint(boot_confused, level = 0.95)
+
+lower_bound <- round(confidence[1,2], 2)
+
+upper_bound <- round(confidence[1,3], 2)
 
 
+```
+Based on the data our observed proportion is `r observed_prop`. After a  bootstrap sampling distribution of this data we are 95% confident that the proportion of the amount of confused ratings that were 4 or more on Dancing with the Stars is between `r lower_bound` and `r upper_bound` points. Zero is not included in this interval which alludes to the fact that there is statistically significant evidence of there being a lot of confusion surrounding the show Dancing with the Stars. The interval stays low though not reaching past .2 so it is only moderately significant evidence for this.  
 
 
+\newpage
+
+## **Problem 4 - Ebay**
+
+The data collected by Ebay in order to assess whether the companys paid advertising on Google search platform was improving ebays revenue
+In the experiment, E Bay randomly assigned each of the 210 DMAs to one of two groups:
+
+• the treatment group, where advertising on Google AdWords for the whole DMA was paused for a month,
+starting on May 22.
+• the control group, where advertising on Google AdWords continued as before.
+
+In ebay.csv you have the results of the experiment. The columns in this data set are:
+
+• DMA: the name of the designated market area, e.g. New York
+• rank: the rank of that DMA by population
+• tv_homes: the number of homes in that DMA with a television, as measured by the market research
+firm Nielsen (who defined the DMAs in the first place)
+• adwords_pause: a 0/1 indicator, where 1 means that DMA was in the treatment group, and 0 means
+that DMA was in the control group.
+• rev_before: EBay’s revenue in dollars from that DMA in the 30 days before May 22, before the
+experiment started.
+• rev_after: EBay’s revenue in dollars from that DMA in the 30 days beginning on May 22, after the
+experiment started.
+
+Is the revenue ratio the same in the treatment and control groups? Or does the data favor the idea that paid search advertising on Google creates extra revenue for Ebay?
 
 
+```{r}
+
+# revenue ratio = ration of revenue after to the revenue before for each DMA
+
+ebay_data <- ebay %>% 
+  mutate(revenue_ratio = rev_after / rev_before)
+
+boot_ebay <- do(10000) * diffmean(revenue_ratio ~ adwords_pause, data =resample(ebay_data))
+boot_df <- data.frame(diffmean = boot_ebay$diffmean)
+
+ggplot(boot_df, aes(x = diffmean)) +
+  geom_histogram(fill = "#60137e", alpha = 0.7)+
+  labs(title= "Boostrap Distribution of Mean ratio between treatment and control group revenues", x = "Difference of Means",y = "Frequency") +
+  theme_minimal()
+
+confidence <- confint(boot_ebay, level = 0.95)
+
+lower_bound <- round(confidence[1,2], 2)
+
+upper_bound <- round(confidence[1,3], 2)
+
+```
+Above we are using boostrap sampling distribution of the difference of means between the revenue ratio for treatment group and the control groups. The above graph tells us that with 95% confidence the difference of revenue ratio means for the treatment group minus the control group is between $`r lower_bound`  and $`r upper_bound`. Zero is not in this interval so it is suggested there is evidence that the effect of Ad Words is weaker afterwards. Because of this we have to say that there is evidence that AdWords is not contributing to extra revenue.
 
